@@ -13,6 +13,7 @@
 
 class Club
 {
+    // List of allowed actions in club
     enum Action
     {
         ComeIn = 1,
@@ -23,24 +24,31 @@ class Club
         GetTable = 12,
         Error = 13
     };
-    // const int ErrorId = 13;
     // Tables
     std::vector<Table> Tables;
     // Clients database by name
     std::map<std::string, Client> ClientsDB;
     // Working hours
     Time OpenTime, CloseTime;
-    // Price
+    // Price per hour
     int HourPrice;
     // Clients' queue
     std::queue<Client*> ClientsQueue;
 
+    // Receives action command and perform it
     void PerformAction(const std::smatch &Match);
+
+    // Register the <TableNum> table for <CurrentClient>
     void TakeTable(Time& ActionTime, int TableNum, int ActionId, Client& CurrentClient);
+
+    // Register <CurrentClient> to the waiting queue
     void StartWaiting(Time& ActionTime, Client& CurrentClient);
-    void ExitClub(Time& ActionTime, int ActionId, const Client& CurrentClient);
+
+    // <CurrentClient> exit the club
+    void ExitClub(Time& ActionTime, int ActionId, Client& CurrentClient);
 
 public:
+    // Parses first line of the <InputFile> to create a club
     Club(std::ifstream& InputFile);
     // Parses the input line
     void ParseActionLine(std::string Line);

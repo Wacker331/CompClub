@@ -27,11 +27,13 @@ public:
         return Name;
     }
 
+    // Sets the current table for client
     void SetTable(int InputTable)
     {
         TableId = InputTable;
     }
 
+    // Return Client TableId or -1 if client hasn't got table
     int GetTable() const
     {
         return TableId;

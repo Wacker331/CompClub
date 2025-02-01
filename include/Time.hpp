@@ -87,6 +87,7 @@ public:
             return this->Minutes >= right.Minutes;
     }
 
+    // Round up hours and return only hours without minutes
     int GetFullHours()
     {
         if (Minutes > 0)
