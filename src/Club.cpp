@@ -65,23 +65,8 @@ void Club::PerformAction(const std::smatch &Match)
         int TableNum = std::stoi(Match[6].str()) - 1;
         if (ClientsDB.count(ClientName) == 0)
             std::cout << ActionTime << " " << Error << " " << "ClientUnknown" << std::endl;
-        else if (TableNum >= 0 && TableNum < Tables.size())
-        {
-            std::cout << ActionTime << " " << ActionId << " " << ClientName << " " << TableNum + 1 << std::endl;
-            if (!Tables[TableNum].isBusy())
-            {
-                Client& CurrentClient = ClientsDB[ClientName];
-                if (CurrentClient.GetTable() != -1)
-                    Tables[CurrentClient.GetTable()].setBusy(false);
-                CurrentClient.SetTable(TableNum);
-                Tables[TableNum].setBusy(true);
-            }
-            else
-                std::cout << ActionTime << " " << Error << " " << "PlaceIsBusy" << std::endl;
-        }
         else
-            std::cout << ActionTime << " " << Error << " " 
-                << "There is less than " << TableNum << " tables" << std::endl;
+            TakeTable(ActionTime, TableNum, ActionId, ClientsDB[ClientName]);
     }
     else if (ActionId == Waiting)
     {
@@ -89,25 +74,14 @@ void Club::PerformAction(const std::smatch &Match)
             std::cout << ActionTime << " " << Error << " " << "ClientUnknown" << std::endl;
         else
         {
-            std::cout << ActionTime << " " << Waiting << " " << ClientName << std::endl;
-            for (int i = 0; i < Tables.size(); i++)
-            {
-                if (!Tables[i].isBusy())
-                {
-                    std::cout << ActionTime << " " << Error << " " <<  "ICanWaitNoLonger" << std::endl;
-                    break;
-                }
-            }
-            // TODO check clients' queue (re-read rules)
+            StartWaiting(ActionTime, ClientsDB[ClientName]);
         }
     }
     else if (ActionId == SelfOut)
     {
         Client &CurrentClient = ClientsDB[ClientName];
-        if (CurrentClient.GetTable() != -1)
-            Tables[CurrentClient.GetTable()].setBusy(false);
+        ExitClub(ActionTime, ActionId, CurrentClient);
         ClientsDB.erase(ClientName);
-        std::cout << ActionTime << " " << ActionId << " " << ClientName << std::endl;
     }
     else
         std::cout << "Unknown ActionId: " << ActionId << std::endl;
@@ -136,9 +110,79 @@ void Club::ParseActionLine(std::string Line)
     }
 }
 
+void Club::TakeTable(Time& ActionTime, int TableNum, int ActionId, Client& CurrentClient)
+{
+    if (!isWorking(ActionTime))
+        return;
+    
+    if (TableNum >= 0 && TableNum < Tables.size())
+    {
+        std::cout << ActionTime << " " << ActionId << " " << CurrentClient.GetName() << " " << TableNum + 1 << std::endl;
+        if (!Tables[TableNum].isBusy())
+        {
+            if (CurrentClient.GetTable() != -1)
+                Tables[CurrentClient.GetTable()].setBusy(ActionTime, false);
+            CurrentClient.SetTable(TableNum);
+            Tables[TableNum].setBusy(ActionTime, true);
+        }
+        else
+            std::cout << ActionTime << " " << Error << " " << "PlaceIsBusy" << std::endl;
+    }
+    else
+    {
+        std::cout << ActionTime << " " << Error << " " 
+                    << "There is less than " << TableNum << " tables" << std::endl;
+    }
+}
+
+void Club::StartWaiting(Time& ActionTime, Client& CurrentClient)
+{
+    std::cout << ActionTime << " " << Waiting << " " << CurrentClient.GetName() << std::endl;
+    for (int i = 0; i < Tables.size(); i++)
+    {
+        if (!Tables[i].isBusy())
+        {
+            std::cout << ActionTime << " " << Error << " " <<  "ICanWaitNoLonger" << std::endl;
+            return;
+        }
+    }
+    if (ClientsQueue.size() > Tables.size())
+    {
+        ExitClub(ActionTime, ComeOut, CurrentClient);
+        ClientsDB.erase(CurrentClient.GetName());
+    }
+    else
+    {
+        ClientsQueue.push(&CurrentClient);
+    }
+}
+
+void Club::ExitClub(Time& ActionTime, int ActionId, const Client& CurrentClient)
+{
+    int TableNumber = CurrentClient.GetTable();
+    if (TableNumber != -1)
+        Tables[TableNumber].setBusy(ActionTime, false);
+    std::cout << ActionTime << " " << ActionId << " " << CurrentClient.GetName() << std::endl;
+    if (ClientsQueue.size() > 0)
+    {
+        Client *ReplaceClient = ClientsQueue.front();
+        TakeTable(ActionTime, TableNumber, GetTable, *ReplaceClient);
+        ClientsQueue.pop();
+    }
+}
+
 void Club::Close()
 {
+    for (const auto& Client : ClientsDB)
+    {
+        ExitClub(CloseTime, ComeOut, Client.second);
+    }
+    ClientsDB.clear();
     std::cout << CloseTime << std::endl;
+    for (int i = 0; i < Tables.size(); i++)
+    {
+        Tables[i].PrintStat(i, HourPrice);
+    }
 }
 
 bool Club::isWorking(Time& Check)

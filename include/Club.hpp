@@ -33,8 +33,12 @@ class Club
     // Price
     int HourPrice;
     // Clients' queue
+    std::queue<Client*> ClientsQueue;
 
     void PerformAction(const std::smatch &Match);
+    void TakeTable(Time& ActionTime, int TableNum, int ActionId, Client& CurrentClient);
+    void StartWaiting(Time& ActionTime, Client& CurrentClient);
+    void ExitClub(Time& ActionTime, int ActionId, const Client& CurrentClient);
 
 public:
     Club(std::ifstream& InputFile);

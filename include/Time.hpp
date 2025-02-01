@@ -26,12 +26,36 @@ public:
             throw std::invalid_argument("Minutes belongs only to [0; 60) ");
     }
 
-    int operator==(Time& right)
+    Time operator-(Time& Right)
+    {
+        int Hours = this->Hours - Right.Hours;
+        int Minutes = this->Minutes - Right.Minutes;
+        if (Minutes < 0)
+        {
+            Hours -= 1;
+            Minutes += 60;
+        }
+        return Time(Hours, Minutes);
+    }
+
+    Time operator+(Time& Right)
+    {
+        int Hours = this->Hours + Right.Hours;
+        int Minutes = this->Minutes + Right.Minutes;
+        if (Minutes >= 60)
+        {
+            Hours += 1;
+            Minutes -= 60;
+        }
+        return Time(Hours, Minutes);
+    }
+
+    int operator==(Time& right) const
     {
         return this->Hours == right.Hours && this->Minutes == right.Minutes;
     }
 
-    int operator<(Time& right)
+    int operator<(Time& right) const
     {
         if (this->Hours != right.Hours)
             return this->Hours < right.Hours;
@@ -39,7 +63,7 @@ public:
             return this->Minutes < right.Minutes;
     }
 
-    int operator<=(Time& right)
+    int operator<=(Time& right) const 
     {
         if (this->Hours != right.Hours)
             return this->Hours <= right.Hours;
@@ -47,7 +71,7 @@ public:
             return this->Minutes <= right.Minutes;
     }
 
-    int operator>(Time& right)
+    int operator>(Time& right) const
     {
         if (this->Hours != right.Hours)
             return this->Hours > right.Hours;
@@ -55,12 +79,20 @@ public:
             return this->Minutes > right.Minutes;
     }
 
-    int operator>=(Time& right)
+    int operator>=(Time& right) const
     {
         if (this->Hours != right.Hours)
             return this->Hours >= right.Hours;
         else
             return this->Minutes >= right.Minutes;
+    }
+
+    int GetFullHours()
+    {
+        if (Minutes > 0)
+            return Hours + 1;
+        else
+            return Hours;
     }
 
     // Comparsions

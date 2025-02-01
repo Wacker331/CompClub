@@ -22,12 +22,17 @@ public:
         TableId = -1;
     }
 
+    std::string GetName() const
+    {
+        return Name;
+    }
+
     void SetTable(int InputTable)
     {
         TableId = InputTable;
     }
 
-    int GetTable()
+    int GetTable() const
     {
         return TableId;
     }
